@@ -1,6 +1,7 @@
 from socket import *
 import chardet
-#import request
+import requests
+import ssl
 
 
 class Request(object):
@@ -26,17 +27,16 @@ class Request(object):
 		if 'GET' == method:
 			for k, v in [i.split(':', 1) for i in temp[1:-1]]:
 				headers[k.strip()] = v.strip()
-		else:
-	
+		
 		return method, path, protocol, headers
 	
 	def __repr__(self):
-		return repr({'method': self._method, 'path': self._path, 'protocol': self._protocol, 'headers': self._headers})
+		#return repr({'method': self._method, 'path': self._path, 'protocol': self._protocol, 'headers': self._headers})
+		return repr(self._path)
 
-
-serverPort = 12000
+serverPort = 80
 serverSocket = socket(AF_INET,SOCK_STREAM)
-serverSocket.bind(('',80))
+serverSocket.bind(('',serverPort))
 serverSocket.listen(1)
 
 print ("The server is ready to receive")
@@ -48,9 +48,18 @@ while 1:
 
         print(sentence)
         req = Request(sentence)
-        connectionSocket.send(repr(req))
 
+        query = str(repr(req))
+
+        #print(query)
+        print(type(bytearray(query,'utf-8').decode('utf-8')))
+
+        proxySocket = socket(AF_INET,SOCK_STREAM)
+        sslSocket = ssl.wrap_socket(s, ssl_version=ssl.PROTOCOL_TLSv1)
+	sslSocket.connect(("naver.com", 80))
+        sslSocket.sendall("GET / HTTP/1.1\r\n\r\n")
+	recv = sslSocket.recv(4096)
+        print(recv)
+
+        connectionSocket.send(recv)
         connectionSocket.close()
-
-
-
