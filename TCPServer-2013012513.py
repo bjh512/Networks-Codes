@@ -1,4 +1,4 @@
-from socket import *
+import socket
 import chardet
 import requests
 import ssl
@@ -35,7 +35,7 @@ class Request(object):
 		return repr(self._path)
 
 serverPort = 80
-serverSocket = socket(AF_INET,SOCK_STREAM)
+serverSocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 serverSocket.bind(('',serverPort))
 serverSocket.listen(1)
 
@@ -51,14 +51,16 @@ while 1:
 
         query = str(repr(req))
 
-        #print(query)
-        print(type(bytearray(query,'utf-8').decode('utf-8')))
+        print(str(query).encode("utf-8"))
+        ip = socket.gethostbyname("pythonprogramminglanguage.com")
+        print(ip)
+	#print(type(bytearray(query,'utf-8').decode('utf-8')))
 
-        proxySocket = socket(AF_INET,SOCK_STREAM)
-        sslSocket = ssl.wrap_socket(s, ssl_version=ssl.PROTOCOL_TLSv1)
-	sslSocket.connect(("naver.com", 80))
+        proxySocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        sslSocket = ssl.wrap_socket(proxySocket, ssl_version=ssl.PROTOCOL_TLSv1_2)
+        sslSocket.connect((ip, 80))
         sslSocket.sendall("GET / HTTP/1.1\r\n\r\n")
-	recv = sslSocket.recv(4096)
+        recv = sslSocket.recv(4096)
         print(recv)
 
         connectionSocket.send(recv)
