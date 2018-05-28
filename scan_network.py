@@ -1,14 +1,20 @@
-import nmap
-import optparse
-import pprint
-from multiprocessing import Pool
-from itertools import product
+import nmap, optparse, pprint
+import socket
+from multiprocessing import Process
  
 def NmapScan(TargetHost, TargetPort):
-    print(TargetHost, TargetPort)
+    print("Checking... // IP : {0} // Port : {1}".format(TargetHost, TargetPort))
     nmScan = nmap.PortScanner()
-    pprint.pprint(nmScan.scan(TargetHost, TargetPort[0]))
-    
+    nmScan.scan(TargetHost, TargetPort, '-T4')
+    cnt = 0
+    for scannedHost in nmScan.all_hosts():
+        if nmScan[scannedHost]['tcp'][int(TargetPort)]['state'] == 'open':
+            cnt = cnt + 1
+            domain = socket.gethostbyaddr(scannedHost)[0]
+            print("{0} : {1}  //  {2}".format(scannedHost, TargetPort, domain))
+            #print(socket.gethostbyaddr(scannedHost+":"+TargetPort))
+    print("\nTotal number of web servers : {0}".format(cnt))
+    print("Scan duration : {0}".format(nmScan.scanstats()['elapsed']))
  
 def main():
     parser = optparse.OptionParser(usage='usage %prog -H <TargetHost> -P <TargetPort>')
@@ -23,14 +29,17 @@ def main():
         print(parser.usage)
         exit(0)
  
-    pool = Pool(processes = 1)
+    procs = []
+
+#Non-Multi와 Multi = 106+106 vs 172
+
     for port in TargetPort:
-        print(TargetHost, TargetPort)
-        pool.starmap(NmapScan(TargetHost, TargetPort))
-        #NmapScan(TargetHost, port)
- 
+        p = Process(target=NmapScan, args=(TargetHost, port))
+        procs.append(p)
+        p.start()
+        
+    for proc in procs:
+        proc.join()
+
 if __name__ == '__main__':
     main()
-
-
-#cd "C:\Users\Juhyeok\Google 드라이브\18-1\Information Security"
